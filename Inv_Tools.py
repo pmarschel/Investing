@@ -17,6 +17,8 @@ class Company:
         self.price = 52.3
         self.shares = 100
 
+        self.initAssets()
+
     def getTicker(self):
         return self.ticker
 
@@ -35,9 +37,10 @@ class Company:
     def getShares(self):
         return self.shares
 
-    def initDebt(self):
+    def initBS(self):
 
-        response = requests.get("http://finance.yahoo.com/q/bs?s=AAPL")
+        URL_ROOT = "http://finance.yahoo.com/q/bs?s="
+        response = requests.get(URL_ROOT + self.getTicker())
         soup = bs4.BeautifulSoup(response.text)
 
         tot_assets = soup.find_all(name="strong", text=re.compile("Total Assets"))
@@ -46,4 +49,6 @@ class Company:
         parent = target.parent
         aunt = parent.next_sibling
         cousin = aunt.contents[1]
-        self.debt = int(cousin.string)
+
+        p=re.compile('[0-9]*')
+        self.assets = int(''.join(p.findall(cousin.string)))
