@@ -53,13 +53,29 @@ class Company:
         # Process the HTML to get total assets
         tot_assets = soup.find_all(name="strong", text=re.compile("Total Assets"))
         target = tot_assets[0]
-
-        parent = target.parent
-        aunt = parent.next_sibling
-        cousin = aunt.contents[1]
+        parent = target.parent.parent
 
         p=re.compile('[0-9]*')
-        self.assets = int(''.join(p.findall(cousin.string)))
+        temp = []
+
+        for node in parent.contents:
+
+            # raw contents
+            raw_contents = ''.join(node.contents[1])
+
+            # get numbers separated by ,
+            nums=p.findall(raw_contents)
+
+            # stick the nums together to get one big num
+            assets = ''.join(nums)
+
+            # put them in the list
+            temp.append(assets)
+
+        # turn list to int and assign to member variable
+        results = [int(i) for i in temp[1:]]
+        self.assets = results
+
 
     def processDebt(self, soup):
 
