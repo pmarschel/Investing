@@ -81,12 +81,29 @@ class Company:
 
         # Process the HTML to get STD and LTD
         tot_debt = soup.find_all(name="td", text=re.compile("Long Term Debt"))
+
+        # do short term debt
         target = tot_debt[0]
-        sib = target.next_sibling
+
+        STD = self.debtTarget(tot_debt[0])
+        LTD = self.debtTarget(tot_debt[1])
+
+        DEBT = [sum(i) for i in zip(STD,LTD)]
+
+        self.debt = DEBT
+
+
+    def debtTarget(self, target):
 
         p=re.compile('[0-9]*')
-        self.debt = int(''.join(p.findall(sib.string)))
 
-        target = tot_debt[1]
-        sib = target.next_sibling
-        self.debt = self.debt + int(''.join(p.findall(sib.string)))
+        result = []
+
+        for i in range(4):
+            target = target.next_sibling
+            result.append(''.join(p.findall(target.string)))
+
+        result = [ '0' if x == '' else x for x in result ]
+
+        return([int(i) for i in result])
+
