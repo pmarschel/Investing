@@ -3,6 +3,7 @@ __author__ = 'petermarschel'
 import requests
 import bs4
 import re
+import datetime
 
 class Company:
 
@@ -13,6 +14,8 @@ class Company:
 
         self.debt = 0
         self.assets = 123
+
+        self.dates=[]
 
         self.price = 52.3
         self.shares = 100
@@ -31,6 +34,9 @@ class Company:
     def getAssets(self):
         return self.assets
 
+    def getDates(self):
+        return self.dates
+
     def getPrice(self):
         return self.price
 
@@ -46,6 +52,7 @@ class Company:
 
         self.processAssets(soup)
         self.processDebt(soup)
+        self.processDates(soup)
 
 
     def processAssets(self, soup):
@@ -107,3 +114,16 @@ class Company:
 
         return([int(i) for i in result])
 
+
+    def processDates(self, soup):
+
+        td = soup.find_all(name="td", text=re.compile("Period Ending"))
+        target = td[0]
+
+        dates = []
+
+        for i in range(4):
+            target = target.next_sibling
+            dates.append(datetime.datetime.strptime(target.string, '%b %d, %Y').date())
+
+        self.dates = dates
