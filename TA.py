@@ -9,7 +9,7 @@ response = requests.get("http://finance.yahoo.com/q/bs?s=AAPL")
 soup = bs4.BeautifulSoup(response.text)
 
 tot_assets = soup.find_all(name="strong", text=re.compile("Total Assets"))
-
+print(tot_assets)
 target = tot_assets[0]
 
 p=re.compile('[0-9]*')

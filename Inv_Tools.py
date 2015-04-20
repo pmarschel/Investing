@@ -19,11 +19,12 @@ class Company:
 
         self.dates=[]
 
-        self.price = 0
-        self.shares = 0
+        self.MarketCap = 0
 
         self.initBS()
         self.initPL()
+        self.initMarketCap()
+
 
     def getTicker(self):
         return self.ticker
@@ -46,11 +47,9 @@ class Company:
     def getDates(self):
         return self.dates
 
-    def getPrice(self):
-        return self.price
+    def getMarketCap(self):
+        return self.MarketCap
 
-    def getShares(self):
-        return self.shares
 
     def initBS(self):
 
@@ -61,7 +60,7 @@ class Company:
 
         self.processAssets(soup)
         self.processDebt(soup)
-        self.processDates(soup)
+        #self.processDates(soup)
 
 
     def initPL(self):
@@ -78,6 +77,29 @@ class Company:
         soup = bs4.BeautifulSoup(response.text)
         
         self.processAnnualRD(soup)
+
+
+    def initMarketCap(self):
+
+        URL_ROOT = "http://finance.yahoo.com/q?s="
+        response = requests.get(URL_ROOT + self.getTicker())
+        soup = bs4.BeautifulSoup(response.text)
+
+        # Process the HTML to get prev close
+        prev_close = soup.find_all(name="th", text=re.compile("Market Cap:"))
+        target = prev_close[0]
+
+        raw=target.next_sibling.string
+
+        raw_mc = float(raw[0:-1])
+        raw_mult = raw[-1]
+
+        if raw_mult=='B':
+            mult = 1000000
+        else:
+            mult = 1000
+
+        self.MarketCap = int(raw_mc * mult)
 
 
     def processAssets(self, soup):
@@ -196,17 +218,59 @@ class Company:
         result = [int(i) for i in result]
 
         self.AnnualRD = result
-    
-    
-    def getROIC(self):
+
+    def calcROIC(self, amort):
         
-        # sum quarterly OI to get annual
-        tot_OI = sum(self.OI)
+        # sum quarterly OI to get annual; add back last year's R&D
+        adj_OI = sum(self.OI) + self.AnnualRD[0]
         
-        # average invested capital
-        ave_IC = sum(self.assets)/len(self.assets)
-        
-        return tot_OI/ave_IC
-        
-        
-        
+        # average assets + R&D asset
+        adj_IC = sum(self.assets)/len(self.assets) + self.calcRDAsset(amort)
+
+        return adj_OI/adj_IC
+
+    def calcRDAsset(self, amort):
+
+        # start the RD sequence with numbers we already have
+        RD = self.AnnualRD
+
+        # get average over last 3 years
+        ave_RD = int(sum(RD)/len(RD))
+
+        # fill out the rest of the RD sequence
+        for i in range(0, amort-len(RD)):
+            RD.append(ave_RD)
+
+        # do straight-line amortization
+        for i, val in enumerate(RD):
+            RD[i] = int(val*(1 - i / amort))
+
+        return sum(RD)
+
+    def calcMS(self, amort):
+
+        # Numerator: Market Cap + Debt (latest)
+        Num = self.MarketCap + self.debt[0]
+
+        # Denominator: Total Assets (latest) + R&D asset
+        Den = self.assets[0] + self.calcRDAsset(amort)
+
+        return round(Num/Den,7)
+
+    # Just a method for testing
+    def printSelf(self):
+
+        print(self.getTicker())
+        print("Updated: " + self.getUpdated())
+        print("Total Assets:")
+        print(self.getAssets())
+        print("Debt:")
+        print(self.getDebt())
+        print("Dates:")
+        print(self.getDates())
+        print("Annual R&D:")
+        print(self.getAnnualRD())
+        print("OI:")
+        print(self.getOI())
+        print("Market Cap:")
+        print(self.getMarketCap())
