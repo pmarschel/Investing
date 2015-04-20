@@ -13,5 +13,13 @@ target = std[0]
 
 sibs = target.next_siblings
 
+p=re.compile('[0-9]*')
+result = []
+
 for sib in sibs:
-    print(sib.string)
+    result.append(''.join(p.findall(sib.string)))
+
+result = [ '0' if x == '' else x for x in result ]
+result = [int(i) for i in result]
+
+print(result)

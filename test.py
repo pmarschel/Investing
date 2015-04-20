@@ -1,8 +1,17 @@
 __author__ = 'petermarschel'
 
 import Inv_Tools
+import yahoo_finance
 
-AAPL = Inv_Tools.Company("AAPL")
+TARG = Inv_Tools.Company("AAPL")
 
-print(AAPL.getDebt())
-print(AAPL.getDates())
+
+print(TARG.getTicker())
+
+print("Collected data")
+print(TARG.getAssets())
+print(TARG.getOI())
+print(TARG.getAnnualRD())
+
+print("Here's the ROIC")
+print(TARG.getROIC())

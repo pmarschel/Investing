@@ -13,14 +13,17 @@ class Company:
         self.updated = "some date"
 
         self.debt = 0
-        self.assets = 123
+        self.assets = 0
+        self.OI = 0
+        self.AnnualRD = 0
 
         self.dates=[]
 
-        self.price = 52.3
-        self.shares = 100
+        self.price = 0
+        self.shares = 0
 
         self.initBS()
+        self.initPL()
 
     def getTicker(self):
         return self.ticker
@@ -33,6 +36,12 @@ class Company:
 
     def getAssets(self):
         return self.assets
+        
+    def getOI(self):
+        return self.OI
+        
+    def getAnnualRD(self):
+        return self.AnnualRD
 
     def getDates(self):
         return self.dates
@@ -53,6 +62,22 @@ class Company:
         self.processAssets(soup)
         self.processDebt(soup)
         self.processDates(soup)
+
+
+    def initPL(self):
+
+        # Get the balance sheet
+        URL_ROOT = "http://finance.yahoo.com/q/is?s="
+        response = requests.get(URL_ROOT + self.getTicker())
+        soup = bs4.BeautifulSoup(response.text)
+
+        self.processOI(soup)
+        
+        RD_ROOT = "http://finance.yahoo.com/q/is?s="
+        response = requests.get(RD_ROOT + self.getTicker() + "&annual")
+        soup = bs4.BeautifulSoup(response.text)
+        
+        self.processAnnualRD(soup)
 
 
     def processAssets(self, soup):
@@ -89,9 +114,6 @@ class Company:
         # Process the HTML to get STD and LTD
         tot_debt = soup.find_all(name="td", text=re.compile("Long Term Debt"))
 
-        # do short term debt
-        target = tot_debt[0]
-
         STD = self.debtTarget(tot_debt[0])
         LTD = self.debtTarget(tot_debt[1])
 
@@ -127,3 +149,64 @@ class Company:
             dates.append(datetime.datetime.strptime(target.string, '%b %d, %Y').date())
 
         self.dates = dates
+        
+    
+    def processOI(self, soup):
+
+        # Process the HTML to get OI
+        OI = soup.find_all(name="strong", text=re.compile("Operating Income or Loss"))
+        target = OI[0]
+        parent = target.parent.parent
+
+        p=re.compile('[0-9]*')
+        temp = []
+
+        for node in parent.contents:
+
+            # raw contents
+            raw_contents = ''.join(node.contents[1])
+
+            # get numbers separated by ,
+            nums=p.findall(raw_contents)
+
+            # stick the nums together to get one big num
+            assets = ''.join(nums)
+
+            # put them in the list
+            temp.append(assets)
+
+        # turn list to int and assign to member variable
+        results = [int(i) for i in temp[1:]]
+        self.OI = results
+    
+    def processAnnualRD(self, soup):
+        
+        std = soup.find_all(name="td", text=re.compile("Research Development"))
+        target = std[0]
+
+        sibs = target.next_siblings
+
+        p=re.compile('[0-9]*')
+        result = []
+
+        for sib in sibs:
+            result.append(''.join(p.findall(sib.string)))
+
+        result = [ '0' if x == '' else x for x in result ]
+        result = [int(i) for i in result]
+
+        self.AnnualRD = result
+    
+    
+    def getROIC(self):
+        
+        # sum quarterly OI to get annual
+        tot_OI = sum(self.OI)
+        
+        # average invested capital
+        ave_IC = sum(self.assets)/len(self.assets)
+        
+        return tot_OI/ave_IC
+        
+        
+        
