@@ -26,54 +26,29 @@ class Company:
         self.initMarketCap()
 
 
-    def getTicker(self):
-        return self.ticker
-
-    def getUpdated(self):
-        return self.updated
-
-    def getDebt(self):
-        return self.debt
-
-    def getAssets(self):
-        return self.assets
-        
-    def getOI(self):
-        return self.OI
-        
-    def getAnnualRD(self):
-        return self.AnnualRD
-
-    def getDates(self):
-        return self.dates
-
-    def getMarketCap(self):
-        return self.MarketCap
-
-
     def initBS(self):
 
         # Get the balance sheet
         URL_ROOT = "http://finance.yahoo.com/q/bs?s="
-        response = requests.get(URL_ROOT + self.getTicker())
+        response = requests.get(URL_ROOT + self.ticker)
         soup = bs4.BeautifulSoup(response.text)
 
         self.processAssets(soup)
         self.processDebt(soup)
-        #self.processDates(soup)
+        self.processDates(soup)
 
 
     def initPL(self):
 
         # Get the balance sheet
         URL_ROOT = "http://finance.yahoo.com/q/is?s="
-        response = requests.get(URL_ROOT + self.getTicker())
+        response = requests.get(URL_ROOT + self.ticker)
         soup = bs4.BeautifulSoup(response.text)
 
         self.processOI(soup)
         
         RD_ROOT = "http://finance.yahoo.com/q/is?s="
-        response = requests.get(RD_ROOT + self.getTicker() + "&annual")
+        response = requests.get(RD_ROOT + self.ticker + "&annual")
         soup = bs4.BeautifulSoup(response.text)
         
         self.processAnnualRD(soup)
@@ -82,7 +57,7 @@ class Company:
     def initMarketCap(self):
 
         URL_ROOT = "http://finance.yahoo.com/q?s="
-        response = requests.get(URL_ROOT + self.getTicker())
+        response = requests.get(URL_ROOT + self.ticker)
         soup = bs4.BeautifulSoup(response.text)
 
         # Process the HTML to get prev close
@@ -230,22 +205,32 @@ class Company:
         return adj_OI/adj_IC
 
     def calcRDAsset(self, amort):
-
-        # start the RD sequence with numbers we already have
-        RD = self.AnnualRD
+        
+        # the no R&D asset case        
+        if amort==0:
+            return 0
+            
+        # amortization factors
+        amort_factors = [(1-i/amort) for i in range(0,amort)]
 
         # get average over last 3 years
-        ave_RD = int(sum(RD)/len(RD))
+        ave_RD = int(sum(self.AnnualRD)/len(self.AnnualRD))
 
-        # fill out the rest of the RD sequence
-        for i in range(0, amort-len(RD)):
-            RD.append(ave_RD)
+        # create an R&D list of the same length as amort_factors
+        full_RD = []
+        for i in range(0,amort):
+            if i < len(self.AnnualRD):
+                full_RD.append(self.AnnualRD[i])
+            else:
+                full_RD.append(ave_RD)
+   
+        RD_asset = []
 
-        # do straight-line amortization
-        for i, val in enumerate(RD):
-            RD[i] = int(val*(1 - i / amort))
-
-        return sum(RD)
+        # get R&D asset value for full R&D
+        for i, fac in enumerate(amort_factors):
+            RD_asset.append(fac * full_RD[i])
+        
+        return sum(RD_asset)
 
     def calcMS(self, amort):
 
@@ -260,17 +245,34 @@ class Company:
     # Just a method for testing
     def printSelf(self):
 
-        print(self.getTicker())
-        print("Updated: " + self.getUpdated())
-        print("Total Assets:")
-        print(self.getAssets())
-        print("Debt:")
-        print(self.getDebt())
-        print("Dates:")
-        print(self.getDates())
-        print("Annual R&D:")
-        print(self.getAnnualRD())
-        print("OI:")
-        print(self.getOI())
-        print("Market Cap:")
-        print(self.getMarketCap())
+        print(self.ticker)
+        #print("Updated: " + self.updated)
+        print("Latest Report Date:")
+        print(self.dates[0])
+        print("Ave Assets:")
+        print(int(sum(self.assets)/len(self.assets)))
+        print("Ave Debt:")
+        print(int(sum(self.debt)/len(self.debt)))
+        print("Ave Annual R&D: ")
+        print(int(sum(self.AnnualRD)/len(self.AnnualRD)))
+        print("Trailing 12-month OI:")
+        print(sum(self.OI))
+        print("Market Cap: ")
+        print(self.MarketCap)
+        print("R&D Asset(5): ")
+        print(int(self.calcRDAsset(5)))
+        print("R&D Asset(10): ")
+        print(int(self.calcRDAsset(10)))
+        print("MS(0): ")
+        print(round(self.calcMS(0),2))
+        print("MS(5): ")
+        print(round(self.calcMS(5),2))
+        print("MS(10): ")
+        print(round(self.calcMS(10),2))
+        print("ROIC(0): ")
+        print(round(self.calcROIC(0),2))
+        print("ROIC(5): ")
+        print(round(self.calcROIC(5),2))
+        print("ROIC(10): ")
+        print(round(self.calcROIC(10),2))
+        
