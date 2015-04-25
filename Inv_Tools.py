@@ -21,9 +21,14 @@ class Company:
 
         self.MarketCap = 0
 
-        self.initBS()
-        self.initPL()
-        self.initMarketCap()
+        try:
+            self.initBS()
+            self.initPL()
+            self.initMarketCap()
+        except:
+            self.OK = False
+        else:
+            self.OK = True
 
 
     def initBS(self):
@@ -202,7 +207,7 @@ class Company:
         # average assets + R&D asset
         adj_IC = sum(self.assets)/len(self.assets) + self.calcRDAsset(amort)
 
-        return adj_OI/adj_IC
+        return round(adj_OI/adj_IC,2)
 
     def calcRDAsset(self, amort):
         
@@ -240,7 +245,7 @@ class Company:
         # Denominator: Total Assets (latest) + R&D asset
         Den = self.assets[0] + self.calcRDAsset(amort)
 
-        return round(Num/Den,7)
+        return round(Num/Den,2)
 
     # Just a method for testing
     def printSelf(self):
