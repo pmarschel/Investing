@@ -10,7 +10,6 @@ class Company:
     def __init__(self, ticker):
 
         self.ticker = ticker
-        self.updated = "some date"
 
         self.debt = 0
         self.assets = 0
