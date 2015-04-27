@@ -106,6 +106,7 @@ class Company:
             temp.append(assets)
 
         # turn list to int and assign to member variable
+        temp = [ '0' if x == '' else x for x in temp ]
         results = [int(i) for i in temp[1:]]
         self.assets = results
 
@@ -160,6 +161,7 @@ class Company:
         parent = target.parent.parent
 
         p=re.compile('[0-9]*')
+
         temp = []
 
         for node in parent.contents:
@@ -173,10 +175,15 @@ class Company:
             # stick the nums together to get one big num
             assets = ''.join(nums)
 
+            # check if a negative number
+            if '(' in raw_contents:
+                assets = '-' + assets
+
             # put them in the list
             temp.append(assets)
 
         # turn list to int and assign to member variable
+        temp = [ '0' if x == '' else x for x in temp ]
         results = [int(i) for i in temp[1:]]
         self.OI = results
     
