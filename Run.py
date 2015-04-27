@@ -11,7 +11,7 @@ with open('Company_List.csv') as f:
     reader = csv.reader(f)
     tick_list = list(reader)
 
-out_file_name = "../Invest_out/out_" + time.strftime("%d_%m_%Y") + ".csv"
+out_file_name = "out_" + time.strftime("%d_%m_%Y") + ".csv"
 
 csvfile = open(out_file_name, 'w', newline='')
 CSV_writer = csv.writer(csvfile, delimiter=',')
@@ -20,7 +20,7 @@ CSV_writer.writerow(["Ticker","MS(0)", "ROIC(0)", "MS(5)", "ROIC(5)", "MS(10)", 
 
 num_processed = 0
 
-for tick in tick_list[190:195]:
+for tick in tick_list:
 
     comp = Inv_Tools.Company(tick[0])
     num_processed += 1
