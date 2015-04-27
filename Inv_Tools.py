@@ -24,8 +24,9 @@ class Company:
             self.initBS()
             self.initPL()
             self.initMarketCap()
-        except:
+        except Exception as e:
             self.OK = False
+            self.error = str(e)
         else:
             self.OK = True
 

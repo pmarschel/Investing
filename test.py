@@ -2,11 +2,10 @@ __author__ = 'petermarschel'
 
 import Inv_Tools
 
-tick = "IBM"
+tick = "23FKil$"
 
 
 TARG = Inv_Tools.Company(tick)
 
 print(TARG.OK)
-print(TARG.OI)
-print(TARG.calcROIC(10))
+print(TARG.error)
