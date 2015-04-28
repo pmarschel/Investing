@@ -35,7 +35,8 @@ for tick in tick_list[1:20]:
                              comp.calcMS(10),
                              comp.calcROIC(10)])
     else:
-        CSV_writer.writerow([comp.error])
+        CSV_writer.writerow([comp.ticker,
+                             comp.error])
 
 csvfile.close()
 
