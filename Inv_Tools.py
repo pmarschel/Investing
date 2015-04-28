@@ -11,24 +11,33 @@ class Company:
 
         self.ticker = ticker
 
-        self.debt = 0
-        self.assets = 0
-        self.OI = 0
-        self.AnnualRD = 0
+        self.debt = []
+        self.assets = []
+        self.OI = []
+        self.AnnualRD = []
 
-        self.dates=[]
+        self.dates = []
 
         self.MarketCap = 0
+
+        self.error = None
+        self.OK = True
 
         try:
             self.initBS()
             self.initPL()
             self.initMarketCap()
+
+            # check to make sure we have 4 quarters of data
+            if len(self.dates)<4:
+                self.OK = False
+                self.error = "Not enough quarterly data"
+
         except Exception as e:
             self.OK = False
             self.error = str(e)
-        else:
-            self.OK = True
+
+
 
 
     def initBS(self):
@@ -131,9 +140,8 @@ class Company:
 
         result = []
 
-        for i in range(4):
-            target = target.next_sibling
-            result.append(''.join(p.findall(target.string)))
+        for sib in target.next_siblings:
+            result.append(''.join(p.findall(sib.string)))
 
         result = [ '0' if x == '' else x for x in result ]
 
@@ -147,9 +155,8 @@ class Company:
 
         dates = []
 
-        for i in range(4):
-            target = target.next_sibling
-            dates.append(datetime.datetime.strptime(target.string, '%b %d, %Y').date())
+        for sib in target.next_siblings:
+            dates.append(datetime.datetime.strptime(sib.string, '%b %d, %Y').date())
 
         self.dates = dates
         

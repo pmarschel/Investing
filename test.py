@@ -2,7 +2,7 @@ __author__ = 'petermarschel'
 
 import Inv_Tools
 
-tick = "23FKil$"
+tick = "VNET"
 
 
 TARG = Inv_Tools.Company(tick)
