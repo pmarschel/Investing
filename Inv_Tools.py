@@ -214,9 +214,14 @@ class Company:
         self.AnnualRD = result
 
     def calcROIC(self, amort):
-        
+
+        if amort==0:
+            RD_add_back = 0
+        else:
+            RD_add_back = self.AnnualRD[0]
+
         # sum quarterly OI to get annual; add back last year's R&D
-        adj_OI = sum(self.OI) + self.AnnualRD[0]
+        adj_OI = sum(self.OI) + RD_add_back
         
         # average assets + R&D asset
         adj_IC = sum(self.assets)/len(self.assets) + self.calcRDAsset(amort)
