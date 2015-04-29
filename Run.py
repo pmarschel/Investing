@@ -20,7 +20,7 @@ CSV_writer.writerow(["Ticker","MS(0)", "ROIC(0)", "MS(5)", "ROIC(5)", "MS(10)", 
 
 num_processed = 0
 
-for tick in tick_list[1:20]:
+for tick in tick_list:
 
     comp = Inv_Tools.Company(tick[0])
     num_processed += 1
