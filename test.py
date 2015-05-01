@@ -1,24 +1,21 @@
 __author__ = 'petermarschel'
 
 
-<<<<<<< HEAD
+import Inv_Tools
 import Inv_Tools_Bio
-=======
-tick = "WTT"
->>>>>>> origin/master
+from pprint import pprint
 
-tick = "PFE"
-
+tick = "BIIB"
 
 TARG = Inv_Tools_Bio.Bio_Company(tick)
-
-print(TARG.InstOwn)
+pprint (vars(TARG))
+print(vars(TARG).__class__)
 print(TARG.OK)
 print(TARG.error)
+#print(sum(TARG.OI))
+#print(TARG.cash)
+#print(TARG.calcOICov())
 
-<<<<<<< HEAD
-=======
-print(TARG.OI)
-print(TARG.assets)
-print(TARG.calcROIC(0))
->>>>>>> origin/master
+
+
+

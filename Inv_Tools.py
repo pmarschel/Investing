@@ -28,23 +28,22 @@ class Company:
             self.initPL()
             self.initMarketCap()
 
-            # check to make sure we have 4 quarters of data
-            if len(self.dates)<4:
-                self.OK = False
-                self.error = "Not enough quarterly data"
-
         except Exception as e:
             self.OK = False
             self.error = str(e)
-<<<<<<< HEAD
-        else:
-            self.OK = True
-            self.error = None
-=======
 
+        if self.not_valid():
+            self.OK = False
+            self.error = "Data Invalid"
 
->>>>>>> origin/master
-
+    def not_valid(self):
+        # slightly laborious checking of attributes
+        if len(self.AnnualRD) == 0: return True
+        if len(self.OI) == 0: return True
+        if len(self.assets) == 0: return True
+        if len(self.dates) == 0: return True
+        if len(self.debt) == 0: return True
+        if self.MarketCap == 0: return True
 
     def initBS(self):
 
@@ -132,15 +131,15 @@ class Company:
         # Process the HTML to get STD and LTD
         tot_debt = soup.find_all(name="td", text=re.compile("Long Term Debt"))
 
-        STD = self.debtTarget(tot_debt[0])
-        LTD = self.debtTarget(tot_debt[1])
+        STD = self.processRow(tot_debt[0])
+        LTD = self.processRow(tot_debt[1])
 
         DEBT = [sum(i) for i in zip(STD,LTD)]
 
         self.debt = DEBT
 
 
-    def debtTarget(self, target):
+    def processRow(self, target):
 
         p=re.compile('[0-9]*')
 
@@ -305,4 +304,5 @@ class Company:
         print(round(self.calcROIC(5),2))
         print("ROIC(10): ")
         print(round(self.calcROIC(10),2))
-        
+
+
