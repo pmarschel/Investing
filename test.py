@@ -1,7 +1,11 @@
 __author__ = 'petermarschel'
 
 
+<<<<<<< HEAD
 import Inv_Tools_Bio
+=======
+tick = "WTT"
+>>>>>>> origin/master
 
 tick = "PFE"
 
@@ -12,3 +16,9 @@ print(TARG.InstOwn)
 print(TARG.OK)
 print(TARG.error)
 
+<<<<<<< HEAD
+=======
+print(TARG.OI)
+print(TARG.assets)
+print(TARG.calcROIC(0))
+>>>>>>> origin/master
