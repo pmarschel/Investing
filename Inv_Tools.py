@@ -29,6 +29,7 @@ class Company:
             self.error = str(e)
         else:
             self.OK = True
+            self.error = None
 
 
     def initBS(self):
