@@ -3,7 +3,6 @@ __author__ = 'petermarschel'
 import requests
 import bs4
 import re
-import datetime
 
 class Company:
 
@@ -11,26 +10,32 @@ class Company:
 
         self.ticker = ticker
 
+        # Balance sheet quantities
         self.debt = []
         self.assets = []
+        self.cash = []
+
+        # P&L quantities
         self.OI = []
         self.AnnualRD = []
 
-        self.dates = []
-
+        # market related
         self.MarketCap = 0
 
+        # error
         self.error = None
         self.OK = True
 
         try:
-            self.initBS()
-            self.initPL()
+            soup = self.getParsedHTML()
+            self.initBS(soup)
+            self.initPL(soup)
             self.initMarketCap()
 
         except Exception as e:
             self.OK = False
             self.error = str(e)
+            print(self.error)
 
         if self.not_valid():
             self.OK = False
@@ -41,37 +46,46 @@ class Company:
         if len(self.AnnualRD) == 0: return True
         if len(self.OI) == 0: return True
         if len(self.assets) == 0: return True
-        if len(self.dates) == 0: return True
         if len(self.debt) == 0: return True
         if self.MarketCap == 0: return True
 
-    def initBS(self):
+    def getParsedHTML(self):
 
-        # Get the balance sheet
-        URL_ROOT = "http://finance.yahoo.com/q/bs?s="
-        response = requests.get(URL_ROOT + self.ticker)
-        soup = bs4.BeautifulSoup(response.text)
+        URL_ROOT = "https://www.google.com/finance?fstype=ii&q="
+        URL_TOT = URL_ROOT + self.ticker
+        response = requests.get(URL_TOT)
+        return bs4.BeautifulSoup(response.text)
 
-        self.processAssets(soup)
-        self.processDebt(soup)
-        self.processDates(soup)
+    def getLineItem(self, soup, lineItem, rank):
 
+        target = soup.find_all(name="td", text=re.compile(lineItem))[rank]
 
-    def initPL(self):
+        results = []
+        for node in target.next_siblings:
+            s = node.string
 
-        # Get the balance sheet
-        URL_ROOT = "http://finance.yahoo.com/q/is?s="
-        response = requests.get(URL_ROOT + self.ticker)
-        soup = bs4.BeautifulSoup(response.text)
+            if s != '\n':
+                if s == '-':
+                    s = "0"
+                s = s.replace(',', '')
+                results.append(float(s))
 
-        self.processOI(soup)
-        
-        RD_ROOT = "http://finance.yahoo.com/q/is?s="
-        response = requests.get(RD_ROOT + self.ticker + "&annual")
-        soup = bs4.BeautifulSoup(response.text)
-        
-        self.processAnnualRD(soup)
+        return results
 
+    def initBS(self, soup):
+
+        self.assets = self.getLineItem(soup, "Total Assets", 0)
+        self.debt = self.getLineItem(soup, "Total Debt", 0)
+
+        CSE = self.getLineItem(soup, "Cash and Short Term Investments", 0)
+        LTI = self.getLineItem(soup, "Long Term Investments", 0)
+
+        self.cash = [sum(i) for i in zip(CSE,LTI)]
+
+    def initPL(self, soup):
+
+        self.OI = self.getLineItem(soup, "Operating Income", 0)
+        self.AnnualRD = self.getLineItem(soup, "Research & Development", 1)
 
     def initMarketCap(self):
 
@@ -89,134 +103,11 @@ class Company:
         raw_mult = raw[-1]
 
         if raw_mult=='B':
-            mult = 1000000
-        else:
             mult = 1000
+        else:
+            mult = 1
 
         self.MarketCap = int(raw_mc * mult)
-
-
-    def processAssets(self, soup):
-
-        # Process the HTML to get total assets
-        tot_assets = soup.find_all(name="strong", text=re.compile("Total Assets"))
-        target = tot_assets[0]
-        parent = target.parent.parent
-
-        p=re.compile('[0-9]*')
-        temp = []
-
-        for node in parent.contents:
-
-            # raw contents
-            raw_contents = ''.join(node.contents[1])
-
-            # get numbers separated by ,
-            nums=p.findall(raw_contents)
-
-            # stick the nums together to get one big num
-            assets = ''.join(nums)
-
-            # put them in the list
-            temp.append(assets)
-
-        # turn list to int and assign to member variable
-        temp = [ '0' if x == '' else x for x in temp ]
-        results = [int(i) for i in temp[1:]]
-        self.assets = results
-
-
-    def processDebt(self, soup):
-
-        # Process the HTML to get STD and LTD
-        tot_debt = soup.find_all(name="td", text=re.compile("Long Term Debt"))
-
-        STD = self.processRow(tot_debt[0])
-        LTD = self.processRow(tot_debt[1])
-
-        DEBT = [sum(i) for i in zip(STD,LTD)]
-
-        self.debt = DEBT
-
-
-    def processRow(self, target):
-
-        p=re.compile('[0-9]*')
-
-        result = []
-
-        for sib in target.next_siblings:
-            result.append(''.join(p.findall(sib.string)))
-
-        result = [ '0' if x == '' else x for x in result ]
-
-        return([int(i) for i in result])
-
-
-    def processDates(self, soup):
-
-        td = soup.find_all(name="td", text=re.compile("Period Ending"))
-        target = td[0]
-
-        dates = []
-
-        for sib in target.next_siblings:
-            dates.append(datetime.datetime.strptime(sib.string, '%b %d, %Y').date())
-
-        self.dates = dates
-        
-    
-    def processOI(self, soup):
-
-        # Process the HTML to get OI
-        OI = soup.find_all(name="strong", text=re.compile("Operating Income or Loss"))
-        target = OI[0]
-        parent = target.parent.parent
-
-        p=re.compile('[0-9]*')
-
-        temp = []
-
-        for node in parent.contents:
-
-            # raw contents
-            raw_contents = ''.join(node.contents[1])
-
-            # get numbers separated by ,
-            nums=p.findall(raw_contents)
-
-            # stick the nums together to get one big num
-            assets = ''.join(nums)
-
-            # check if a negative number
-            if '(' in raw_contents:
-                assets = '-' + assets
-
-            # put them in the list
-            temp.append(assets)
-
-        # turn list to int and assign to member variable
-        temp = [ '0' if x == '' else x for x in temp ]
-        results = [int(i) for i in temp[1:]]
-        self.OI = results
-    
-    def processAnnualRD(self, soup):
-        
-        std = soup.find_all(name="td", text=re.compile("Research Development"))
-        target = std[0]
-
-        sibs = target.next_siblings
-
-        p=re.compile('[0-9]*')
-        result = []
-
-        for sib in sibs:
-            result.append(''.join(p.findall(sib.string)))
-
-        result = [ '0' if x == '' else x for x in result ]
-        result = [int(i) for i in result]
-
-        self.AnnualRD = result
 
     def calcROIC(self, amort):
 
@@ -226,10 +117,10 @@ class Company:
             RD_add_back = self.AnnualRD[0]
 
         # sum quarterly OI to get annual; add back last year's R&D
-        adj_OI = sum(self.OI) + RD_add_back
+        adj_OI = sum(self.OI[0:3]) + RD_add_back
         
         # average assets + R&D asset
-        adj_IC = sum(self.assets)/len(self.assets) + self.calcRDAsset(amort)
+        adj_IC = sum(self.assets[0:3])/len(self.assets[0:3]) + self.calcRDAsset(amort)
 
         return round(adj_OI/adj_IC,2)
 
@@ -242,7 +133,7 @@ class Company:
         # amortization factors
         amort_factors = [(1-i/amort) for i in range(0,amort)]
 
-        # get average over last 3 years
+        # get average over last x years
         ave_RD = int(sum(self.AnnualRD)/len(self.AnnualRD))
 
         # create an R&D list of the same length as amort_factors
@@ -275,9 +166,6 @@ class Company:
     def printSelf(self):
 
         print(self.ticker)
-        #print("Updated: " + self.updated)
-        print("Latest Report Date:")
-        print(self.dates[0])
         print("Ave Assets:")
         print(int(sum(self.assets)/len(self.assets)))
         print("Ave Debt:")
