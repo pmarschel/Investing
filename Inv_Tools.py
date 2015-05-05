@@ -9,6 +9,11 @@ class Company:
     def __init__(self, ticker):
 
         self.ticker = ticker
+        
+        if len(ticker) == 4:
+            self.exchange = "NASDAQ"
+        else:
+            self.exchange = "NYSE"
 
         # Balance sheet quantities
         self.debt = []
@@ -52,7 +57,7 @@ class Company:
     def getParsedHTML(self):
 
         URL_ROOT = "https://www.google.com/finance?fstype=ii&q="
-        URL_TOT = URL_ROOT + self.ticker
+        URL_TOT = URL_ROOT + self.exchange + "%3A" + self.ticker
         response = requests.get(URL_TOT)
         return bs4.BeautifulSoup(response.text)
 
