@@ -23,23 +23,21 @@ class Bio_Company(Inv_Tools.Company):
 
     def initInstOwn(self):
 
-        URL_ROOT = "http://finance.yahoo.com/q/ks?s="
-        response = requests.get(URL_ROOT + self.ticker)
+        URL_ROOT = "https://www.google.com/finance?q="
+        URL_TOT = URL_ROOT + self.exchange + "%3A" + self.ticker
+        response = requests.get(URL_TOT)
         soup = bs4.BeautifulSoup(response.text)
 
-        # Process the HTML to get prev close
-        start_html = soup.find_all(name="td", text=re.compile('Float'))
+        target = soup.find_all(name="table", class_="snap-data")
 
-        target = start_html[0]
-        target = target.parent.next_sibling.next_sibling
-        raw = target.contents[1].string
+        elements = list(target[1].children)
+        IO_group = elements[9].contents
 
-        if raw == 'N/A':
-            inst_own = 0
-        else:
-            inst_own = float(raw[0:3])
+        raw = IO_group[3].contents[0]
+        p = re.compile('[%]')
 
-        self.InstOwn = inst_own
+        if '%' in raw:
+            self.InstOwn = int(p.split(raw)[0])
 
     def calcOICov(self):
 

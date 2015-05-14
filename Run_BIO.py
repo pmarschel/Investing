@@ -10,7 +10,7 @@ with open('Company_List_BIO.csv') as f:
     reader = csv.reader(f)
     tick_list = list(reader)
 
-out_file_name = "out_BIO_" + time.strftime("%d_%m_%Y") + ".csv"
+out_file_name = "../Invest_out/out_BIO_" + time.strftime("%d_%m_%Y") + ".csv"
 
 csvfile = open(out_file_name, 'w', newline='')
 CSV_writer = csv.writer(csvfile, delimiter=',')
@@ -23,7 +23,7 @@ for tick in tick_list:
 
     comp = Inv_Tools_Bio.Bio_Company(tick[0])
     num_processed += 1
-    print(num_processed)
+    print(str(num_processed) + ": " + tick[0])
 
     if comp.OK:
         CSV_writer.writerow([comp.ticker,

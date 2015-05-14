@@ -8,9 +8,9 @@ class Company:
 
     def __init__(self, ticker):
 
-        self.ticker = ticker
-        
-        if len(ticker) == 4:
+        self.ticker = ticker.strip()
+
+        if len(self.ticker) == 4:
             self.exchange = "NASDAQ"
         else:
             self.exchange = "NYSE"
@@ -30,6 +30,7 @@ class Company:
         # error
         self.error = None
         self.OK = True
+        self.dataValid = True
 
         try:
             soup = self.getParsedHTML()
@@ -40,11 +41,10 @@ class Company:
         except Exception as e:
             self.OK = False
             self.error = str(e)
-            print(self.error)
 
-        if self.not_valid():
+        if self.not_valid() and self.error is None:
             self.OK = False
-            self.error = "Data Invalid"
+            self.dataValid = False
 
     def not_valid(self):
         # slightly laborious checking of attributes
@@ -94,25 +94,27 @@ class Company:
 
     def initMarketCap(self):
 
-        URL_ROOT = "http://finance.yahoo.com/q?s="
-        response = requests.get(URL_ROOT + self.ticker)
+        URL_ROOT = "https://www.google.com/finance?q="
+        URL_TOT = URL_ROOT + self.exchange + "%3A" + self.ticker
+        response = requests.get(URL_TOT)
         soup = bs4.BeautifulSoup(response.text)
 
-        # Process the HTML to get prev close
-        prev_close = soup.find_all(name="th", text=re.compile("Market Cap:"))
-        target = prev_close[0]
+        target = soup.find_all(name="table", class_="snap-data")
 
-        raw=target.next_sibling.string
+        elements = list(target[0].children)
+        MC_group = elements[9].contents
 
-        raw_mc = float(raw[0:-1])
-        raw_mult = raw[-1]
+        raw = MC_group[3].contents[0]
 
-        if raw_mult=='B':
-            mult = 1000
+        p = re.compile('[M]*[B]*')
+        raw_mc = float(p.split(raw)[0])
+
+        if 'B' in p.findall(raw):
+            mult = 1000.0
         else:
-            mult = 1
+            mult = 1.0
 
-        self.MarketCap = int(raw_mc * mult)
+        self.MarketCap = raw_mc * mult
 
     def calcROIC(self, amort):
 

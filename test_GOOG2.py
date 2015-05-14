@@ -7,16 +7,20 @@ import re
 ticker = "BLUE"
 
 URL_ROOT = "https://www.google.com/finance?q="
-URL_TOT = URL_ROOT + ticker
+URL_TOT = URL_TOT = URL_ROOT + "NASDAQ" + "%3A" + ticker
 response = requests.get(URL_TOT)
+print(URL_TOT)
 soup = bs4.BeautifulSoup(response.text)
-print(soup)
-
-#target = soup.find_all(name="table", class_="snap-data")
-target = soup.find_all(name="td", class_="key")
-print(target)
 
 
+target = soup.find_all(name="table", class_="snap-data")
+#target = soup.find_all(name="td", text=re.compile('Mkt Cap'))
+elements = list(target[1].children)
+print(elements[9].contents)
+
+#MC_group = elements[9].contents
+
+#print(MC_group[3].contents[0])
 #node = target.parent.contents
 
 '''p=re.compile('[0-9]*')
