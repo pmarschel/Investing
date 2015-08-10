@@ -48,3 +48,14 @@ class Bio_Company(Inv_Tools.Company):
             return -10
         else:
             return -round(curr_cash/OI_ann,2)
+
+    def passScreen(self, ms15_lim, OIcov_lim, instOwn_lim):
+
+        if self.InstOwn < instOwn_lim:
+            return False
+        elif self.calcOICov() < OIcov_lim:
+            return False
+        elif self.calcMS(15) > ms15_lim:
+            return False
+        else:
+            return True
